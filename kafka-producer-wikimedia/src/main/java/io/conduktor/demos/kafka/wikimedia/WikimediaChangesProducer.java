@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -38,14 +37,23 @@ public class WikimediaChangesProducer {
 
     @NotNull
     private static WikimediaChangeHandler getWikimediaChangeHandler(String topic) {
-        var producer = new KafkaProducer<String, String>(Map.ofEntries(
-                new AbstractMap.SimpleEntry<>(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092"),
-                new AbstractMap.SimpleEntry<>(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName()),
-                new AbstractMap.SimpleEntry<>(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName())
-        ));
-        return new WikimediaChangeHandler(producer, topic);
+        var properties = new Properties();
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        // set safe producer configs (only for Kafka <= 2.8, otherwise not needed to be set manually)
+        properties.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        properties.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+        properties.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString((Integer.MAX_VALUE)));
+        // set high throughput producer configs
+        properties.setProperty(ProducerConfig.LINGER_MS_CONFIG, "20");
+        properties.setProperty(ProducerConfig.BATCH_SIZE_CONFIG, Integer.toString(32 * 1024));
+        properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+
+        return new WikimediaChangeHandler(new KafkaProducer<>(properties), topic);
     }
 
+    @NotNull
     private static BackgroundEventSource getBackgroundEventSource(WikimediaChangeHandler handler, String url) {
         var eventSourceBuilder = new EventSource.Builder(URI.create(url));
         return new BackgroundEventSource.Builder(handler, eventSourceBuilder).build();
