@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaSbtSettings">
+    <option name="customLauncherPath" />
+    <option name="customVMPath" />
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/kafka-consumer-opensearch" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/kafka-consumer-opensearch" />
+            <option value="$PROJECT_DIR$/kafka-consumer-opensearch/project" />
+          </set>
+        </option>
+      </SbtProjectSettings>
+    </option>
+  </component>
+</project>
